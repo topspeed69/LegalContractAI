@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#2196F3" />
+    <title>LegalAssist - AI-Powered Legal Assistant</title>
+    <meta name="description" content="AI-powered legal assistant for case summarization, contract drafting, and compliance checking" />
+
+  <meta property="og:title" content="LegalAssist - AI-Powered Legal Assistant" />
+  <meta property="og:description" content="AI-powered legal assistant for case summarization, contract drafting, and compliance checking" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="legalaidemo.vercel.app/" />
+  <meta property="og:image" content="/og.jpg" />
+  <meta property="og:image:alt" content="LegalAssist preview" />
+  <meta property="og:site_name" content="LegalAssist" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@VinayMendole" />
+  <meta name="twitter:title" content="LegalAssist - AI-Powered Legal Assistant" />
+  <meta name="twitter:description" content="AI-powered legal assistant for case summarization, contract drafting, and compliance checking" />
+  <meta name="twitter:image" content="/og.jpg" />
+  <link rel="canonical" href="legalaidemo.vercel.app" />
+
+    <!-- Prevent white flash before theme loads -->
+    <script>
+      try {
+        const theme = localStorage.getItem('vite-ui-theme') || 'system';
+        const root = document.documentElement;
+        
+        if (theme === 'system') {
+          const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          root.classList.add(systemTheme);
+          root.setAttribute('data-theme', systemTheme);
+        } else {
+          root.classList.add(theme);
+          root.setAttribute('data-theme', theme);
+        }
+      } catch (e) {
+        console.warn('Failed to initialize theme', e);
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
