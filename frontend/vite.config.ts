@@ -8,9 +8,15 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+
+  optimizeDeps: {
+    exclude: ["html-docx-js"],
+  },
+
   plugins: [
     react(),
   ],
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

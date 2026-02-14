@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { marked } from "marked";
 import html2pdf from "html2pdf.js";
-import htmlDocx from "html-docx-js/dist/html-docx";
+import { Document, Packer, Paragraph } from "docx";
 import { saveAs } from "file-saver";
 
 interface GeneratedReportProps {

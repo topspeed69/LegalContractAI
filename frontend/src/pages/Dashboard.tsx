@@ -1,14 +1,46 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Search, CheckCircle, PenSquare, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { RecentActivity } from "@/components/RecentActivity";
-import { AICredits } from "@/components/AICredits";
+import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const { user } = useAuth();
-  
+
+  // AI Credits
+  const [credits, setCredits] = useState<number | null>(null);
+  const [creditsLoading, setCreditsLoading] = useState(true);
+
+  const fetchCredits = async () => {
+    if (!user) return;
+
+    setCreditsLoading(true);
+
+    const { data, error } = await supabase
+      .from("user_credits")
+      .select("credits_remaining")
+      .eq("user_id", user.id)
+      .single();
+
+    if (error) {
+      console.error("Credits fetch error:", error);
+      toast.error("Failed to load AI credits");
+      setCredits(0);
+    } else {
+      setCredits(data?.credits_remaining ?? 0);
+    }
+
+    setCreditsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchCredits();
+  }, [user]);
+
   const features = [
     {
       id: "case-summary",
@@ -16,7 +48,7 @@ const Dashboard = () => {
       description: "Generate concise summaries",
       icon: FileText,
       path: "/case-summary",
-      color: "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+      color: "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300",
     },
     {
       id: "loophole-detection",
@@ -24,7 +56,7 @@ const Dashboard = () => {
       description: "Identify legal risks",
       icon: Search,
       path: "/loophole-detection",
-      color: "bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300"
+      color: "bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300",
     },
     {
       id: "clause-classification",
@@ -32,7 +64,7 @@ const Dashboard = () => {
       description: "Analyze clauses",
       icon: CheckCircle,
       path: "/clause-classification",
-      color: "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300"
+      color: "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300",
     },
     {
       id: "contract-drafting",
@@ -40,7 +72,7 @@ const Dashboard = () => {
       description: "Create contracts with AI",
       icon: PenSquare,
       path: "/contract-drafting",
-      color: "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
+      color: "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300",
     },
     {
       id: "compliance-check",
@@ -48,34 +80,44 @@ const Dashboard = () => {
       description: "Verify regulatory compliance",
       icon: Shield,
       path: "/compliance-check",
-      color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
-    }
+      color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300",
+    },
   ];
 
   return (
     <div className="container-tight py-8">
       <div className="mb-8">
-        <h1 className="heading-2 mb-2">Welcome back, {user?.user_metadata.full_name || 'User'}</h1>
-        <p className="text-muted-foreground">Access our AI-powered legal tools</p>
+        <h1 className="heading-2 mb-2">
+          Welcome back, {user?.user_metadata?.full_name || "User"}
+        </h1>
+        <p className="text-muted-foreground">
+          Access our AI-powered legal tools
+        </p>
       </div>
-      
+
       <div className="space-y-8">
+        {/* Feature Cards */}
         <div className="grid gap-4 md:grid-cols-2">
           {features.map((feature) => (
             <Link key={feature.id} to={feature.path}>
               <Card className="h-full transition-colors hover:bg-muted/50">
                 <CardContent className="p-6">
-                  <div className={`w-12 h-12 rounded-lg mb-4 flex items-center justify-center ${feature.color}`}>
+                  <div
+                    className={`w-12 h-12 rounded-lg mb-4 flex items-center justify-center ${feature.color}`}
+                  >
                     <feature.icon className="w-6 h-6" />
                   </div>
                   <h3 className="font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground">{feature.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {feature.description}
+                  </p>
                 </CardContent>
               </Card>
             </Link>
           ))}
         </div>
 
+        {/* Widgets */}
         <div className="grid gap-6">
           <Card>
             <CardContent className="p-6">
@@ -84,6 +126,7 @@ const Dashboard = () => {
           </Card>
 
           <div className="grid gap-6 md:grid-cols-2">
+            {/* Analytics */}
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-lg font-medium mb-4">Analytics</h2>
@@ -92,7 +135,23 @@ const Dashboard = () => {
                 </div>
               </CardContent>
             </Card>
-            <AICredits />
+
+            {/* AI Credits */}
+            <Card>
+              <CardContent className="p-6 flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-medium mb-1">AI Credits</h2>
+                  <p className="text-sm text-muted-foreground">Remaining</p>
+                  <p className="text-3xl font-bold">
+                    {creditsLoading ? "Loading..." : credits}
+                  </p>
+                </div>
+
+                <Button variant="outline" size="sm" onClick={fetchCredits}>
+                  Refresh
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
