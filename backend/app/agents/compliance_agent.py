@@ -140,14 +140,6 @@ class ComplianceAgent:
                 "parsed": parsed,
                 "rag_context": rag_bundle
             }
-
-            logger.info(f"Compliance analysis completed: {parsed.get('risk_level', 'unknown')} risk")
-            return result
-
-        except Exception as e:
-            logger.error(f"Error during compliance analysis: {str(e)}", exc_info=True)
-            raise
-
     async def _fetch_rag_context(
         self,
         clause: str,
@@ -167,6 +159,13 @@ class ComplianceAgent:
         except Exception as exc:
             logger.warning("RAG pipeline unavailable, reason: %s", exc)
             return None
+
+            logger.info(f"Compliance analysis completed: {parsed.get('risk_level', 'unknown')} risk")
+            return result
+
+        except Exception as e:
+            logger.error(f"Error during compliance analysis: {str(e)}", exc_info=True)
+            raise
 
     async def _search_legal_snippets(
         self,

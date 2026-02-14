@@ -32,7 +32,7 @@ class GeminiClient:
         if not self.api_key:
             raise ValueError("Gemini API key not provided. Set GEMINI_API_KEY environment variable.")
         
-        self.endpoint = f"https://generativelanguage.googleapis.com/v1/models/{self.model}:generateContent"
+        self.endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
         logger.info(f"GeminiClient initialized with model: {self.model}")
 
     async def generate(self, prompt: str, temperature: float = 0.3, max_tokens: int = 4096) -> str:
@@ -58,7 +58,8 @@ class GeminiClient:
                 ],
                 "generationConfig": {
                     "maxOutputTokens": max_tokens,
-                    "temperature": temperature
+                    "temperature": temperature,
+                    "responseMimeType": "text/plain"
                 }
             }
 
@@ -180,24 +181,17 @@ Generate a complete, professional contract in Markdown format."""
                         logger.warning(f"Skipping invalid PDF path: {p}")
 
             payload = {
-                "contents": [
-                    {
-                        "parts": [
-                            {"text": f"{system_prompt}\n\n{user_prompt}"}
-                        ] + [
-                            {
-                                "file_data": {
-                                    "mime_type": "application/pdf",
-                                    "file_uri": f["file"]["file_uri"]
-                                }
-                            }
-                            for f in files_payload
-                        ]
-                    }
-                ],
+                "prompt": {
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ]
+                },
+                "files": files_payload,
                 "generationConfig": {
                     "maxOutputTokens": max_tokens,
-                    "temperature": temperature
+                    "temperature": temperature,
+                    "responseMimeType": "text/plain"
                 }
             }
 

@@ -4,10 +4,6 @@ Use environment variables to override defaults.
 """
 import os
 from pathlib import Path
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
 
 # Gemini / Gemini API key
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
