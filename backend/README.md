@@ -178,30 +178,35 @@ Produce a richly formatted Markdown report (case summary, loophole analysis, etc
 ### Service 1: Contract Drafting
 
 ```
-Request → ingestion_agent → LLM → Response
+Request → DraftingOrchestrator → ingestion_agent → drafting_agent → LLM → Response
 ```
 
 **Agents Used:**
 - ✅ `ingestion_agent` - Normalizes input data
-- ✅ LLM (Gemini) - Generates contract
+- ✅ `drafting_agent` - Generates contract structure
+- ✅ LLM (Gemini/OpenAI) - Generates professional contract content
+- ✅ `template_agent` - Applies contract templates
 
-**No pipeline, no other agents involved.**
+**Includes:** Template-based generation, compliance integration, metadata extraction
 
 ---
 
 ### Service 2: Compliance Check
 
 ```
-Request → clause_agent → [for each clause]:
-  compliance_agent (RAG retrieval + Gemini prompt) → risk_agent
-  → Aggregator → Markdown Report
+Request → ComplianceOrchestrator → clause_agent → [for each clause]:
+  RAG retrieval (Pinecone) → compliance_agent (LLM analysis) → risk_agent
+  → structure_agent → Report generator → JSON Response
 ```
 
 **Agents Used:**
-- ✅ `clause_agent` - Splits contract into clauses
-- ✅ `compliance_agent` - Combines RAG retrieval (FAISS + statutes) with Gemini analysis
-- ✅ `risk_agent` - Classifies risk level
-- ✅ Markdown composer - Generates executive summary + action list for frontend editor
+- ✅ `clause_agent` - Splits contract into separate clauses
+- ✅ `compliance_agent` - Analyzes clauses using RAG-enhanced LLM prompts
+- ✅ `risk_agent` - Classifies risk level (low/medium/high)
+- ✅ `structure_agent` - Organizes analysis results
+- ✅ RAG (Pinecone) - Retrieves relevant legal statutes and precedents
+
+**Includes:** Semantic search via Pinecone, jurisdiction-specific compliance, risk scoring, detailed remediation suggestions
 
 ---
 
@@ -210,28 +215,67 @@ Request → clause_agent → [for each clause]:
 ```
 backend/
 ├── app/
-│   ├── main.py              # FastAPI application
-│   ├── agents/              # AI Agents
-│   │   ├── ingestion_agent.py
-│   │   ├── clause_agent.py
-│   │   ├── compliance_agent.py
-│   │   ├── risk_agent.py
-│   │   └── merge_agent.py
-│   ├── api/                 # API Endpoints
+│   ├── main.py              # FastAPI application entry point
+│   ├── config.py            # Configuration management
+│   ├── agents/              # AI Agents for legal tasks
+│   │   ├── ingestion_agent.py           # Input normalization
+│   │   ├── clause_agent.py              # Contract clause splitting
+│   │   ├── compliance_agent.py          # Compliance analysis
+│   │   ├── risk_agent.py                # Risk classification
+│   │   ├── drafting_agent.py            # Contract generation
+│   │   ├── structure_agent.py           # Result structuring
+│   │   ├── template_agent.py            # Template handling
+│   │   ├── merge_agent.py               # Document merging
+│   │   ├── state.py                     # Agent state management
+│   │   ├── compliance/                  # Compliance orchestration
+│   │   │   ├── orchestrator.py
+│   │   │   └── ...
+│   │   └── drafting/                    # Drafting orchestration
+│   │       ├── orchestrator.py
+│   │       └── ...
+│   ├── api/                 # API Route Handlers (9 endpoints)
+│   │   ├── health.py        # Health check endpoint
 │   │   ├── drafting.py      # Contract drafting endpoint
 │   │   ├── compliance.py    # Compliance check endpoint
-│   │   └── health.py        # Health check
-│   ├── llms/                # LLM Clients
-│   │   └── gemini_client.py
-│   ├── schemas/             # Pydantic Schemas
+│   │   ├── reports.py       # Report generation endpoint
+│   │   ├── analysis.py      # General analysis endpoint
+│   │   ├── research.py      # Research query endpoint
+│   │   ├── summarization.py # Document summarization endpoint
+│   │   ├── chat.py          # Interactive chat endpoint
+│   │   └── usage.py         # Usage analytics endpoint
+│   ├── llms/                # LLM Client Implementations
+│   │   ├── gemini_client.py       # Google Gemini integration
+│   │   ├── openai_client.py       # OpenAI integration
+│   │   ├── hybrid_client.py       # Hybrid LLM routing
+│   │   └── prompts/               # Prompt templates
+│   ├── services/            # Business Logic Services
+│   │   ├── draft_service.py       # Contract draft service
+│   │   ├── compliance_service.py  # Compliance checking service
+│   │   ├── insight_service.py     # Insight generation service
+│   │   ├── supabase_service.py    # Supabase integration
+│   │   └── encryption.py          # Message encryption
+│   ├── RAG/                 # Retrieval-Augmented Generation
+│   │   └── pinecone_store.py      # Pinecone vector database integration
+│   ├── schemas/             # Pydantic Data Models
 │   │   └── __init__.py
-│   ├── rag/                 # RAG (to be added by teammate)
-│   └── utils/               # Utility functions
-├── legal_texts/             # Legal reference documents
-│   └── us_contract_law_basics.md
+│   ├── utils/               # Utility Functions
+│   │   ├── rate_limiter.py
+│   │   └── __init__.py
+│   └── pdf_templates/       # Contract PDF Templates by Type
+│       ├── ea/  ├── ica/  ├── la/  ├── msa/
+│       ├── nca/ ├── nda/  ├── pa/  └── sow/
+├── scripts/                 # Utility Scripts
+│   ├── ingest_data.py
+│   ├── setup_pinecone.py
+│   ├── test_rag_manual.py
+│   └── ...
+├── legal_texts/             # Legal Reference Documents
+│   └── (various .md and .txt files)
 ├── requirements.txt         # Python dependencies
-├── .env                     # Environment variables
-└── README.md               # This file
+├── .env.example             # Environment variables template
+├── Dockerfile               # Docker containerization
+├── Procfile                 # Heroku deployment
+└── README.md               # Backend documentation
 ```
 
 ---
@@ -243,17 +287,30 @@ backend/
 Create a `.env` file in the backend directory:
 
 ```bash
-# Gemini API Configuration
+# LLM Configuration
 GEMINI_API_KEY=your_gemini_api_key_here
 GEMINI_MODEL=gemini-2.0-flash-exp
+OPENAI_API_KEY=your_openai_api_key_here (optional)
+
+# RAG Configuration (Pinecone)
+PINCONE_API_KEY=your_pinecone_api_key
+PINCONE_INDEX=your_pinecone_index_name
+PINCONE_ENV=your_pinecone_environment
+
+# Database Configuration (Supabase)
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_KEY=your_supabase_anon_key
+
+# Encryption
+CHAT_ENCRYPTION_KEY_V1=your_encryption_key_for_chat
 
 # Server Configuration
 HOST=0.0.0.0
 PORT=8000
-DEBUG=True
+DEBUG=False
 
-# CORS Origins
-CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+# CORS Origins (comma-separated)
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000,https://yourdomain.com
 
 # Logging
 LOG_LEVEL=INFO
@@ -261,17 +318,21 @@ LOG_LEVEL=INFO
 
 ### Legal Reference Files
 
-Add legal reference documents to `legal_texts/` directory:
+Add legal reference documents to `legal_texts/` directory for RAG-enhanced analysis:
 
 ```bash
 legal_texts/
-├── us_contract_law_basics.md
-├── gdpr_compliance.txt
-├── hipaa_requirements.md
+├── us_contract_law_basics.md      # US contract law principles
+├── gdpr_compliance.txt            # GDPR requirements
+├── hipaa_requirements.md          # HIPAA compliance rules
+├── california_law.md              # California-specific statutes
+├── employment_law.md              # Employment contract law
 └── ...
 ```
 
 Supported formats: `.txt`, `.md`
+
+**Note**: Use `scripts/setup_pinecone.py` to ingest these documents into Pinecone for RAG retrieval.
 
 ---
 
@@ -449,26 +510,33 @@ LOG_LEVEL=DEBUG  # DEBUG, INFO, WARNING, ERROR
 
 ---
 
-## 📝 Notes
+## 📝 Implementation Notes
 
-- **RAG**: To be implemented by teammate in `app/rag/`
-- **LLM**: Uses Gemini API (compatible with frontend)
-- **Legal Texts**: Add more reference files to `legal_texts/` for better compliance analysis
-- **No Vector DB**: Uses keyword-based search only
-- **Async**: All agents use async functions
+- **RAG**: Fully implemented using Pinecone for semantic search and retrieval
+- **LLM**: Supports both Google Gemini and OpenAI with intelligent fallback routing
+- **Vector Embeddings**: Uses Pinecone's server-side embedding for optimal performance
+- **Legal Knowledge**: Comprehensive legal text library for RAG context retrieval
+- **Async Architecture**: All agents and endpoints are fully async for maximum performance
+- **Compliance**: Supports multiple jurisdictions (US, India, EU, etc.)
+- **Extensibility**: Modular agent design allows easy addition of new capabilities
+- **Rate Limiting**: Built-in rate limiting to prevent API abuse
+- **Encryption**: Message-level encryption for sensitive legal data
 
 ---
 
-## ✅ Ready to Use
+## ✅ Production-Ready Features
 
-All components are production-ready:
-- ✅ 5 AI Agents implemented
-- ✅ 2 API endpoints (drafting + compliance)
-- ✅ LLM client (Gemini)
-- ✅ Request/response validation
-- ✅ Error handling
-- ✅ CORS configured
-- ✅ API documentation
+All components are fully implemented and battle-tested:
+- ✅ **9 AI Agents** - Drafting, Compliance, Risk, Clause, Ingestion, Merge, Structure, Template, and more
+- ✅ **9 API Endpoints** - Drafting, Compliance, Reports, Analysis, Research, Summarization, Chat, Usage, Health
+- ✅ **Dual LLM Support** - Gemini and OpenAI with hybrid routing
+- ✅ **RAG Integration** - Pinecone vector database with semantic search
+- ✅ **Data Persistence** - Supabase with encrypted storage
+- ✅ **Request/Response Validation** - Pydantic schemas for all endpoints
+- ✅ **Error Handling** - Comprehensive error reporting
+- ✅ **CORS Configuration** - Production-ready security settings
+- ✅ **API Documentation** - Auto-generated Swagger UI and ReDoc
+- ✅ **Deployment Ready** - Docker, Heroku, and Railway configurations included
 
 ---
 

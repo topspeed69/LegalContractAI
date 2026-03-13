@@ -43,7 +43,7 @@ class GeminiClient:
         
         logger.info(f"GeminiClient initialized with model: {self.model_name}")
 
-    async def generate(self, prompt: str, temperature: float = 0.3, max_tokens: int = 25600) -> str:
+    async def generate(self, prompt: str, temperature: float = 0.3, max_tokens: int = 25600, skip_rate_limit: bool = False) -> str:
         """
         Generate text using Gemini SDK.
         """
@@ -53,11 +53,17 @@ class GeminiClient:
                 max_output_tokens=max_tokens
             )
             
-            async with self.rate_limiter:
+            if skip_rate_limit:
                 response = await self.model.generate_content_async(
                     prompt,
                     generation_config=generation_config
                 )
+            else:
+                async with self.rate_limiter:
+                    response = await self.model.generate_content_async(
+                        prompt,
+                        generation_config=generation_config
+                    )
             
             return response.text
         except Exception as e:
@@ -67,7 +73,7 @@ class GeminiClient:
                  logger.warning(f"Prompt blocked: {e.response.prompt_feedback}")
             raise
 
-    async def generate_contract(self, metadata: Dict[str, Any], requirements: str) -> str:
+    async def generate_contract(self, metadata: Dict[str, Any], requirements: str, skip_rate_limit: bool = False) -> str:
         """
         Generate a contract using metadata and requirements.
         """
@@ -106,9 +112,9 @@ Draft a {purpose} contract with the following details:
 
 Generate a complete, professional contract in Markdown format."""
 
-        return await self.generate(prompt, temperature=0.3, max_tokens=4096)
+        return await self.generate(prompt, temperature=0.3, max_tokens=4096, skip_rate_limit=skip_rate_limit)
 
-    async def generate_with_pdfs(self, system_prompt: str, user_prompt: str, pdf_paths: Optional[list] = None, temperature: float = 0.2, max_tokens: int = 4096) -> Dict[str, Any]:
+    async def generate_with_pdfs(self, system_prompt: str, user_prompt: str, pdf_paths: Optional[list] = None, temperature: float = 0.2, max_tokens: int = 4096, skip_rate_limit: bool = False) -> Dict[str, Any]:
         """
         Generate content using Gemini and attach PDF templates.
         Uses the File API to upload PDFs.
@@ -136,11 +142,17 @@ Generate a complete, professional contract in Markdown format."""
                 max_output_tokens=max_tokens
             )
 
-            async with self.rate_limiter:
+            if skip_rate_limit:
                 response = await self.model.generate_content_async(
                     parts,
                     generation_config=generation_config
                 )
+            else:
+                async with self.rate_limiter:
+                    response = await self.model.generate_content_async(
+                        parts,
+                        generation_config=generation_config
+                    )
             
             return {"text": response.text}
 

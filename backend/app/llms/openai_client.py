@@ -44,7 +44,7 @@ class OpenAIClient:
         
         logger.info(f"OpenAIClient initialized with model: {self.model}")
 
-    async def generate(self, prompt: str, temperature: float = 0.3, max_tokens: int = 4096) -> str:
+    async def generate(self, prompt: str, temperature: float = 0.3, max_tokens: int = 4096, skip_rate_limit: bool = False) -> str:
         """
         Generate text using OpenAI API.
 
@@ -63,8 +63,11 @@ class OpenAIClient:
                 
             messages = [HumanMessage(content=prompt)]
             
-            async with self.rate_limiter:
-                response = await self.chat_model.ainvoke(messages)
+            if skip_rate_limit:
+                 response = await self.chat_model.ainvoke(messages)
+            else:
+                async with self.rate_limiter:
+                    response = await self.chat_model.ainvoke(messages)
             
             return response.content
 
@@ -72,7 +75,7 @@ class OpenAIClient:
             logger.error(f"Error calling OpenAI API: {str(e)}", exc_info=True)
             raise
 
-    async def generate_contract(self, metadata: Dict[str, Any], requirements: str) -> str:
+    async def generate_contract(self, metadata: Dict[str, Any], requirements: str, skip_rate_limit: bool = False) -> str:
         """
         Generate a contract using metadata and requirements.
 
@@ -122,8 +125,11 @@ Generate a complete, professional contract in Markdown format."""
         ]
 
         try:
-            async with self.rate_limiter:
+            if skip_rate_limit:
                 response = await self.chat_model.ainvoke(messages)
+            else:
+                async with self.rate_limiter:
+                    response = await self.chat_model.ainvoke(messages)
             return response.content
         except Exception as e:
             logger.error(f"Error in generate_contract: {str(e)}", exc_info=True)
@@ -131,13 +137,13 @@ Generate a complete, professional contract in Markdown format."""
     
     # Mock support for generate_with_pdfs since OpenAI doesn't support file URIs the same way Gemini does
     # or implement it if needed using vision/file search. For now, just a placeholder or text-only fallback.
-    async def generate_with_pdfs(self, system_prompt: str, user_prompt: str, pdf_paths: Optional[list] = None, temperature: float = 0.2, max_tokens: int = 4096) -> Dict[str, Any]:
+    async def generate_with_pdfs(self, system_prompt: str, user_prompt: str, pdf_paths: Optional[list] = None, temperature: float = 0.2, max_tokens: int = 4096, skip_rate_limit: bool = False) -> Dict[str, Any]:
         """
         Generate content, ignoring PDF attachments for now or treating them as text if parsed.
         """
         logger.warning("OpenAIClient.generate_with_pdfs called. PDF attachments are currently not supported in this client. Using text prompt only.")
         full_prompt = f"{system_prompt}\n\n{user_prompt}"
-        text = await self.generate(full_prompt, temperature, max_tokens)
+        text = await self.generate(full_prompt, temperature, max_tokens, skip_rate_limit=skip_rate_limit)
         return {"text": text}
 
 # Global client instance

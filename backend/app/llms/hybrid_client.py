@@ -66,7 +66,7 @@ class HybridLLMClient:
                 
                 # 2. Attempt generation
                 logger.info(f"HybridClient: Attempting generation with {client_name}")
-                return await client.generate(prompt, temperature, max_tokens)
+                return await client.generate(prompt, temperature, max_tokens, skip_rate_limit=True)
             
             except Exception as e:
                 # Check for rate limit errors in exception
@@ -101,7 +101,7 @@ class HybridLLMClient:
                     continue
 
                 logger.info(f"HybridClient: Generating contract with {client_name}")
-                return await client.generate_contract(metadata, requirements)
+                return await client.generate_contract(metadata, requirements, skip_rate_limit=True)
 
             except Exception as e:
                 logger.warning(f"HybridClient: {client_name} failed contract gen: {e}")
@@ -129,7 +129,7 @@ class HybridLLMClient:
                 if not await client.rate_limiter.try_acquire():
                      continue
                 
-                return await client.generate_with_pdfs(system_prompt, user_prompt, pdf_paths, temperature, max_tokens)
+                return await client.generate_with_pdfs(system_prompt, user_prompt, pdf_paths, temperature, max_tokens, skip_rate_limit=True)
             except Exception as e:
                 errors.append(f"{client_name}: {e}")
         

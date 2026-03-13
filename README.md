@@ -634,10 +634,8 @@ npm run dev -- --port 5174
 
 - **Issues**: [GitHub Issues](https://github.com/your-repo/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/your-repo/discussions)
-- **Email**: support@legalcontractai.com
-
 ---
 
-**Last Updated**: February 2026  
+**Last Updated**: February 16, 2026  
 **Version**: 1.0.0
 
