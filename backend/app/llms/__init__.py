@@ -1,35 +1,27 @@
-
 import os
-from .gemini_client import GeminiClient, get_gemini_client
-from .openai_client import OpenAIClient, get_openai_client
+from .nvidia_client import NvidiaClient, get_nvidia_client
+from .openrouter_client import OpenRouterClient, get_openrouter_client
 from .hybrid_client import HybridLLMClient, get_hybrid_client
 
 def get_llm_client(provider: str = None, use_fast: bool = False):
     """
     Factory to get the appropriate LLM client.
-    Prioritizes passed provider, then OpenAI, then Gemini.
-    
-    Args:
-        provider: 'openai' or 'google'
-        use_fast: If True, uses lighter/faster models (gpt-4.1-nano, gemini-3-flash-preview)
+    Prioritizes passed provider, then OpenRouter, then Nvidia.
     """
-    # Define fast model mappings
-    OPENAI_FAST = "gpt-4.1-nano"
-    GEMINI_FAST = "gemini-3-flash-preview"
+    OPENROUTER_FAST = "openai/gpt-4o-mini"
+    NVIDIA_FAST = "moonshotai/kimi-k2-thinking"
     
     selected_model = None
     if use_fast:
-        if provider == "openai" or (not provider and os.getenv("OPENAI_API_KEY")):
-            selected_model = OPENAI_FAST
-        elif provider == "google" or (not provider and (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"))):
-            selected_model = GEMINI_FAST
+        if provider == "openrouter" or (not provider and os.getenv("OPENROUTER_API_KEY")):
+            selected_model = OPENROUTER_FAST
+        elif provider == "nvidia" or (not provider and os.getenv("NVIDIA_API_KEY")):
+            selected_model = NVIDIA_FAST
 
-    if provider == "openai" and os.getenv("OPENAI_API_KEY"):
-        return get_openai_client(model=selected_model)
-    elif provider == "google" and (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")):
-        return get_gemini_client(model=selected_model)
+    if provider == "nvidia":
+        return get_nvidia_client(model=selected_model)
+    
+    # Default to openrouter, effectively bypassing HybridLLMClient logic
+    return get_openrouter_client(model=selected_model)
 
-    # Default to Hybrid Client for fallback behavior
-    return get_hybrid_client()
-
-__all__ = ['GeminiClient', 'OpenAIClient', 'HybridLLMClient', 'get_llm_client', 'get_gemini_client', 'get_openai_client', 'get_hybrid_client']
+__all__ = ['NvidiaClient', 'OpenRouterClient', 'HybridLLMClient', 'get_llm_client', 'get_nvidia_client', 'get_openrouter_client', 'get_hybrid_client']

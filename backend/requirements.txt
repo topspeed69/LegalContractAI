@@ -20,11 +20,11 @@ python-dotenv==1.0.0
 # RAG + AI Tooling
 langchain
 langchain-community
-langchain-google-genai
-google-generativeai
+# langchain-google-genai
+# google-generativeai
 # langchain-huggingface
 # sentence-transformers==3.2.1  # Removed: using Pinecone server-side embeddings
-pinecone-client[grpc]>=5.0.0
+pinecone-client>=5.0.0
 
 langchain-pinecone==0.2.0
 langchain-openai

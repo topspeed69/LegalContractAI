@@ -1,50 +1,50 @@
 """
-Hybrid LLM Client - Smart Fallback between OpenAI and Gemini
+Hybrid LLM Client - Smart Fallback between OpenRouter and Nvidia
 """
 
 import os
 import logging
 import random
 from typing import Optional, Dict, Any, List
-from app.llms.openai_client import OpenAIClient, get_openai_client
-from app.llms.gemini_client import GeminiClient, get_gemini_client
+from app.llms.openrouter_client import OpenRouterClient, get_openrouter_client
+from app.llms.nvidia_client import NvidiaClient, get_nvidia_client
 
 logger = logging.getLogger(__name__)
 
 class HybridLLMClient:
     """
-    LLM Client that orchestrates calls between OpenAI and Gemini.
+    LLM Client that orchestrates calls between OpenRouter and Nvidia.
     Strategies:
     1. Primary/Secondary: Try Primary first (check rate limit), if fail/limited, try Secondary.
     2. Load Balancing (Future): Distribute load.
     
     Current Logic:
-    - Default to OpenAI as Primary (better quality generally).
-    - If OpenAI rate limited (429 or local rate limiter blocked), switch to Gemini.
+    - Default to OpenRouter as Primary (better quality generally).
+    - If OpenRouter rate limited (429 or local rate limiter blocked), switch to Nvidia.
     - If both fail, raise exception.
     """
 
-    def __init__(self, primary_provider: str = "openai", model: Optional[str] = None):
+    def __init__(self, primary_provider: str = "openrouter", model: Optional[str] = None):
         self.primary_provider = primary_provider
         
-        self.openai_client = None
+        self.openrouter_client = None
         try:
-            self.openai_client = get_openai_client()
+            self.openrouter_client = get_openrouter_client()
         except Exception:
-            logger.warning("HybridClient: OpenAI client not available (missing key?)")
+            logger.warning("HybridClient: OpenRouter client not available (missing key?)")
 
-        self.gemini_client = None
+        self.nvidia_client = None
         try:
-            self.gemini_client = get_gemini_client()
+            self.nvidia_client = get_nvidia_client()
         except Exception:
-             logger.warning("HybridClient: Gemini client not available (missing key?)")
+             logger.warning("HybridClient: Nvidia client not available (missing key?)")
 
     @property
     def chat_model(self):
         """Return a LangChain-compatible ChatOpenAI model for agent use."""
-        if self.openai_client and hasattr(self.openai_client, 'chat_model'):
-            return self.openai_client.chat_model
-        raise AttributeError("No LangChain-compatible chat model available. OpenAI client is not configured.")
+        if self.openrouter_client and hasattr(self.openrouter_client, 'chat_model'):
+            return self.openrouter_client.chat_model
+        raise AttributeError("No LangChain-compatible chat model available. OpenRouter client is not configured.")
 
     async def generate(self, prompt: str, temperature: float = 0.3, max_tokens: int = 4096) -> str:
         """
@@ -59,18 +59,13 @@ class HybridLLMClient:
                 continue
                 
             try:
-                # 1. Check local rate limiter before making call (Fast fail)
-                if not await client.rate_limiter.try_acquire():
-                    logger.warning(f"HybridClient: {client_name} rate limiter blocked. Switching provider.")
-                    continue
-                
                 # 2. Attempt generation
                 logger.info(f"HybridClient: Attempting generation with {client_name}")
                 return await client.generate(prompt, temperature, max_tokens, skip_rate_limit=True)
             
             except Exception as e:
                 # Check for rate limit errors in exception
-                # OpenAI: 429, Gemini: 429 or ResourceExhausted
+                # OpenRouter: 429, Nvidia: 429 or ResourceExhausted
                 error_str = str(e).lower()
                 is_rate_limit = "429" in error_str or "too many requests" in error_str or "resource exhausted" in error_str or "quota" in error_str
                 
@@ -96,10 +91,6 @@ class HybridLLMClient:
             if not client: continue
             
             try:
-                if not await client.rate_limiter.try_acquire():
-                    logger.warning(f"HybridClient: {client_name} rate limiter blocked. Switching.")
-                    continue
-
                 logger.info(f"HybridClient: Generating contract with {client_name}")
                 return await client.generate_contract(metadata, requirements, skip_rate_limit=True)
 
@@ -111,24 +102,15 @@ class HybridLLMClient:
 
     async def generate_with_pdfs(self, system_prompt: str, user_prompt: str, pdf_paths: Optional[list] = None, temperature: float = 0.2, max_tokens: int = 4096) -> Dict[str, Any]:
         """
-        Route to Gemini preferably as it supports PDFs natively.
-        If OpenAI is primary and PDF is present, we might want to FORCE Gemini or use OpenAI fallback (text only).
+        No native PDF support for Nvidia or OpenRouter at the moment.
         """
-        # If PDFs are present, PREFER Gemini because OpenAI implementation is text-only fallback currently
-        if pdf_paths:
-            # Force Gemini first if PDFs exist
-            clients = [("Gemini", self.gemini_client), ("OpenAI", self.openai_client)]
-        else:
-             clients = self._get_execution_order()
+        clients = self._get_execution_order()
 
         errors = []
         for client_name, client in clients:
             if not client: continue
 
             try:
-                if not await client.rate_limiter.try_acquire():
-                     continue
-                
                 return await client.generate_with_pdfs(system_prompt, user_prompt, pdf_paths, temperature, max_tokens, skip_rate_limit=True)
             except Exception as e:
                 errors.append(f"{client_name}: {e}")
@@ -141,12 +123,12 @@ class HybridLLMClient:
         Returns list of (name, client) tuples in order of preference.
         """
         order = []
-        if self.primary_provider == "openai":
-            if self.openai_client: order.append(("OpenAI", self.openai_client))
-            if self.gemini_client: order.append(("Gemini", self.gemini_client))
+        if self.primary_provider == "openrouter":
+            if self.openrouter_client: order.append(("OpenRouter", self.openrouter_client))
+            if self.nvidia_client: order.append(("Nvidia", self.nvidia_client))
         else:
-            if self.gemini_client: order.append(("Gemini", self.gemini_client))
-            if self.openai_client: order.append(("OpenAI", self.openai_client))
+            if self.nvidia_client: order.append(("Nvidia", self.nvidia_client))
+            if self.openrouter_client: order.append(("OpenRouter", self.openrouter_client))
         return order
 
 
