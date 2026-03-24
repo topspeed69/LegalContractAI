@@ -139,6 +139,7 @@ const AIForm: React.FC<AIFormProps> = ({
 
     setIsLoading(true);
     setResponse(null);
+    console.log("Submit started. Loading set to true.");
 
     try {
       let textContent = inputText;
@@ -150,9 +151,12 @@ const AIForm: React.FC<AIFormProps> = ({
 
       // Check credits before invoking AI
       if (!user) {
+        console.log("No user found. Aborting.");
         toast.error('You must be logged in to use this feature');
+        setIsLoading(false); // Make sure we stop the spinner
         return;
       }
+      console.log("User found:", user.id);
 
       const defaultCredits = Number(import.meta.env.VITE_DEFAULT_CREDITS) || 5;
 
@@ -206,12 +210,16 @@ const AIForm: React.FC<AIFormProps> = ({
       }
 
       const available = (currentCredits.last_reset_date === today) ? currentCredits.credits_remaining : defaultCredits;
+      console.log("Credits available:", available);
       if (available <= 0) {
         toast.error('You have exhausted your daily credits');
+        setIsLoading(false); // Make sure we stop the spinner
         return;
       }
 
+      console.log("Calling aiClient.process...");
       const { data, error, metadata } = await aiClient.process(taskType, textContent, additionalData);
+      console.log("aiClient.process response:", { data: data ? "Success" : null, error, metadata });
       if (error) throw error;
 
       // Record the usage with prompt and response

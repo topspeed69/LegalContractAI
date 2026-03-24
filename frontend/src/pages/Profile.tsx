@@ -30,7 +30,7 @@ const Profile = () => {
     total: 5,
     remaining: 5
   });
-  const [provider, setProvider] = useState(user?.user_metadata?.llm_provider || "openai");
+  const [provider, setProvider] = useState(user?.user_metadata?.llm_provider || "openrouter");
 
   useEffect(() => {
     const fetchCredits = async () => {
@@ -64,7 +64,7 @@ const Profile = () => {
     }
   };
 
-  const updateLLMProvider = async (newProvider: 'openai' | 'google') => {
+  const updateLLMProvider = async (newProvider: 'openrouter' | 'google') => {
     try {
       setProvider(newProvider);
       const { error } = await supabase.auth.updateUser({
@@ -72,7 +72,7 @@ const Profile = () => {
       });
       if (error) throw error;
       await refreshUser();
-      toast.success(`Default AI set to ${newProvider === 'openai' ? 'OpenAI GPT-4o' : 'Google Gemini Pro'}`);
+      toast.success(`Default AI set to ${newProvider === 'openrouter' ? 'OpenRouter Models' : 'Google Gemini Pro'}`);
     } catch (error) {
       toast.error("Failed to update AI preference");
       console.error("Provider update error:", error);
@@ -179,18 +179,18 @@ const Profile = () => {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div
-                onClick={() => updateLLMProvider('openai')}
+                onClick={() => updateLLMProvider('openrouter')}
                 className={cn(
                   "relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all hover:border-primary/50",
-                  provider === 'openai' ? "border-primary bg-primary/5 shadow-md" : "border-border bg-transparent opacity-80"
+                  provider === 'openrouter' ? "border-primary bg-primary/5 shadow-md" : "border-border bg-transparent opacity-80"
                 )}
               >
-                {provider === 'openai' && <Check className="absolute top-3 right-3 h-4 w-4 text-primary" />}
+                {provider === 'openrouter' && <Check className="absolute top-3 right-3 h-4 w-4 text-primary" />}
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600">
                     <Zap className="h-6 w-6" />
                   </div>
-                  <span className="font-bold">OpenAI GPT-4o</span>
+                  <span className="font-bold">OpenRouter Models</span>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Fast, accurate, and highly reliable. Best for complex logic and international laws.
