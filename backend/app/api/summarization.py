@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 )
 async def summarize_case(request: CaseSummaryRequest):
     try:
-        from app.config import OPENAI_API_KEY
+        from app.config import OPENROUTER_API_KEY
         from langchain_openai import ChatOpenAI
         from langchain_core.prompts import PromptTemplate
         from langchain_core.output_parsers import JsonOutputParser
@@ -30,8 +30,8 @@ async def summarize_case(request: CaseSummaryRequest):
             key_holdings: List[str] = Field(description="List of key holdings or rulings")
             citations: List[str] = Field(description="List of relevant citations mentioned")
 
-        if not OPENAI_API_KEY:
-             logger.warning("OPENAI_API_KEY not found. Returning dummy response.")
+        if not OPENROUTER_API_KEY:
+             logger.warning("OPENROUTER_API_KEY not found. Returning dummy response.")
              return CaseSummaryResponse(
                 summary="[Simulation] This is a simulated summary. The case discusses contract breach and damages.",
                 key_holdings=["Holding 1: Contract was valid", "Holding 2: Breach occurred"],

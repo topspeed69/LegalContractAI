@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from app.schemas import LegalResearchRequest, LegalResearchResponse, Citation, ErrorResponse
 from app.RAG.pinecone_store import pinecone_service
-from app.config import INDEX_STATUTES, INDEX_CASES, INDEX_REGULATIONS, OPENAI_API_KEY
+from app.config import INDEX_STATUTES, INDEX_CASES, INDEX_REGULATIONS, OPENROUTER_API_KEY
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 import logging
@@ -62,9 +62,9 @@ async def legal_research(request: LegalResearchRequest):
              context_str = "No specific legal documents found in the database. Please answer based on general legal principles."
 
         # 3. Synthesize with LLM
-        if not OPENAI_API_KEY:
+        if not OPENROUTER_API_KEY:
              # Fallback if no key (for testing without billing)
-             logger.warning("OPENAI_API_KEY not found. Returning dummy response.")
+             logger.warning("OPENROUTER_API_KEY not found. Returning dummy response.")
              return LegalResearchResponse(
                 answer="[Simulation] This is a simulated response because the OpenAI API Key is missing. In a real scenario, I would synthesize the answer from the retrieved statutes and case law.",
                 citations=citations

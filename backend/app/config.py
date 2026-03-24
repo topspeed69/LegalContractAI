@@ -8,7 +8,7 @@ PROJECT_NAME = "LegalContractAI"
 VERSION = "1.0.0"
 
 # AI Settings
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Pinecone Settings

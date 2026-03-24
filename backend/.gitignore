@@ -37,6 +37,7 @@ venv.bak/
 .venv/
 build/
 dist/
+test_vercel_env/
 *.egg-info/
 .pytest_cache/
 .mypy_cache/

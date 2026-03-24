@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query
 from app.schemas import ChatRequest, ChatResponse, ErrorResponse, Citation
-from app.config import OPENAI_API_KEY, INDEX_STATUTES, INDEX_CASES, INDEX_REGULATIONS
+from app.config import OPENROUTER_API_KEY, INDEX_STATUTES, INDEX_CASES, INDEX_REGULATIONS
 from app.llms import get_llm_client
 from app.RAG.pinecone_store import pinecone_service
 from app.services.encryption import encryption_service
@@ -185,7 +185,7 @@ async def chat_assistant(request: ChatRequest):
             except Exception as e:
                 logger.error(f"Failed to store encrypted user message: {e}")
 
-        if not OPENAI_API_KEY:
+        if not OPENROUTER_API_KEY:
             # Simulation response
             reply = "[Simulation] I am a legal assistant. I can help you draft contracts, check compliance, or research laws."
             if user_id:

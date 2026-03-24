@@ -17,6 +17,9 @@ pydantic-settings>=2.3.0
 # Environment Variables
 python-dotenv==1.0.0
 
+# Encryption
+cryptography
+
 # RAG + AI Tooling
 langchain
 langchain-community

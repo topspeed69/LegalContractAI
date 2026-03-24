@@ -1,4 +1,0 @@
-﻿--- Testing Usage Encryption via TestClient for User: 7f60c0e7-487e-4686-8800-71378d83ba78 ---
-Step 1: Recording usage...
-ERROR: 500
-Response Body: {"detail":"Failed to store usage record"}
