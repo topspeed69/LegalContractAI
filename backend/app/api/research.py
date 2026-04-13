@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from app.schemas import LegalResearchRequest, LegalResearchResponse, Citation, ErrorResponse
 from app.RAG.pinecone_store import pinecone_service
-from app.config import INDEX_STATUTES, INDEX_CASES, INDEX_REGULATIONS, OPENROUTER_API_KEY
+from app.config import INDEX_STATUTES, INDEX_CASES, INDEX_REGULATIONS, NVIDIA_API_KEY
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 import logging
@@ -62,12 +62,22 @@ async def legal_research(request: LegalResearchRequest):
              context_str = "No specific legal documents found in the database. Please answer based on general legal principles."
 
         # 3. Synthesize with LLM
-        if not OPENROUTER_API_KEY:
-             # Fallback if no key (for testing without billing)
-             logger.warning("OPENROUTER_API_KEY not found. Returning dummy response.")
-             return LegalResearchResponse(
-                answer="[Simulation] This is a simulated response because the OpenAI API Key is missing. In a real scenario, I would synthesize the answer from the retrieved statutes and case law.",
-                citations=citations
+        if not NVIDIA_API_KEY:
+            logger.warning("NVIDIA_API_KEY not found. Returning dummy response.")
+            return LegalResearchResponse(
+                answer="[Simulation] This is a simulated answer. Section 10 of the Indian Contract Act states that all agreements are contracts if they are made by the free consent of parties competent to contract.",
+                citations=[
+                    Citation(
+                        title="Indian Contract Act, 1872",
+                        source="Section 10",
+                        text="All agreements are contracts if they are made by the free consent of parties competent to contract..."
+                    ),
+                    Citation(
+                        title="Mohori Bibee v Dharmodas Ghose",
+                        source="1903",
+                        text="The Privy Council held that a contract with a minor is void-ab-initio."
+                    )
+                ]
             )
 
         from app.llms import get_llm_client

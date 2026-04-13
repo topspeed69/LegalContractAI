@@ -30,7 +30,7 @@ const Profile = () => {
     total: 5,
     remaining: 5
   });
-  const [provider, setProvider] = useState(user?.user_metadata?.llm_provider || "openrouter");
+  const [provider, setProvider] = useState(user?.user_metadata?.llm_provider || "nvidia");
 
   useEffect(() => {
     const fetchCredits = async () => {
@@ -64,7 +64,7 @@ const Profile = () => {
     }
   };
 
-  const updateLLMProvider = async (newProvider: 'openrouter' | 'google') => {
+  const updateLLMProvider = async (newProvider: 'nvidia') => {
     try {
       setProvider(newProvider);
       const { error } = await supabase.auth.updateUser({
@@ -72,7 +72,7 @@ const Profile = () => {
       });
       if (error) throw error;
       await refreshUser();
-      toast.success(`Default AI set to ${newProvider === 'openrouter' ? 'OpenRouter Models' : 'Google Gemini Pro'}`);
+      toast.success("Default AI set to Nvidia NIM (Kimi)");
     } catch (error) {
       toast.error("Failed to update AI preference");
       console.error("Provider update error:", error);
@@ -177,42 +177,23 @@ const Profile = () => {
             <CardDescription>Choose the default LLM provider for your contract drafting and analysis.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div
-                onClick={() => updateLLMProvider('openrouter')}
+                onClick={() => updateLLMProvider('nvidia')}
                 className={cn(
                   "relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all hover:border-primary/50",
-                  provider === 'openrouter' ? "border-primary bg-primary/5 shadow-md" : "border-border bg-transparent opacity-80"
+                  provider === 'nvidia' ? "border-primary bg-primary/5 shadow-md" : "border-border bg-transparent opacity-80"
                 )}
               >
-                {provider === 'openrouter' && <Check className="absolute top-3 right-3 h-4 w-4 text-primary" />}
+                {provider === 'nvidia' && <Check className="absolute top-3 right-3 h-4 w-4 text-primary" />}
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600">
                     <Zap className="h-6 w-6" />
                   </div>
-                  <span className="font-bold">OpenRouter Models</span>
+                  <span className="font-bold">Nvidia NIM (Kimi) Intelligence Engine</span>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Fast, accurate, and highly reliable. Best for complex logic and international laws.
-                </p>
-              </div>
-
-              <div
-                onClick={() => updateLLMProvider('google')}
-                className={cn(
-                  "relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all hover:border-primary/50",
-                  provider === 'google' ? "border-primary bg-primary/5 shadow-md" : "border-border bg-transparent opacity-80"
-                )}
-              >
-                {provider === 'google' && <Check className="absolute top-3 right-3 h-4 w-4 text-primary" />}
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600">
-                    <Cpu className="h-6 w-6" />
-                  </div>
-                  <span className="font-bold">Google Gemini Pro</span>
-                </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Excellent reasoning and massive context window. Ideal for large document analysis.
+                  State-of-the-art legal reasoning powered by Moonshot AI Kimi-K2. Optimized for contract drafting, compliance, and legal research with massive context support.
                 </p>
               </div>
             </div>

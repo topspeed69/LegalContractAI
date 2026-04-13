@@ -19,14 +19,14 @@ logger = logging.getLogger(__name__)
 )
 async def analyze_clauses(request: ClauseAnalysisRequest):
     try:
-        from app.config import OPENROUTER_API_KEY, INDEX_STATUTES
+        from app.config import NVIDIA_API_KEY, INDEX_STATUTES
         from app.RAG.pinecone_store import pinecone_service
         from langchain_openai import ChatOpenAI
         from langchain_core.prompts import PromptTemplate
         from langchain_core.output_parsers import JsonOutputParser
         from app.schemas import ClauseAnalysisResponse
 
-        if not OPENROUTER_API_KEY:
+        if not NVIDIA_API_KEY:
              # Fallback if no key (for testing without billing)
              return ClauseAnalysisResponse(
                 risks=[

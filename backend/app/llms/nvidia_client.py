@@ -34,6 +34,19 @@ class NvidiaClient:
 
         logger.info(f"NvidiaClient initialized with model: {self.model}")
 
+    @property
+    def chat_model(self):
+        """
+        Returns a LangChain-compatible ChatOpenAI instance.
+        """
+        from langchain_openai import ChatOpenAI
+        return ChatOpenAI(
+            model=self.model,
+            openai_api_key=self.api_key,
+            openai_api_base=self.base_url,
+            temperature=0.3
+        )
+
     async def generate(self, prompt: str, temperature: float = 0.3, max_tokens: int = 16384, skip_rate_limit: bool = False) -> str:
         """
         Generate text using Nvidia NIM API via openai SDK.

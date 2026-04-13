@@ -1,27 +1,21 @@
 import os
+import logging
 from .nvidia_client import NvidiaClient, get_nvidia_client
-from .openrouter_client import OpenRouterClient, get_openrouter_client
-from .hybrid_client import HybridLLMClient, get_hybrid_client
+
+logger = logging.getLogger(__name__)
 
 def get_llm_client(provider: str = None, use_fast: bool = False):
     """
     Factory to get the appropriate LLM client.
-    Prioritizes passed provider, then OpenRouter, then Nvidia.
+    Defaults to Nvidia NIM.
     """
-    OPENROUTER_FAST = "openai/gpt-4o-mini"
-    NVIDIA_FAST = "moonshotai/kimi-k2-thinking"
+    NVIDIA_FAST = os.getenv("NVIDIA_MODEL", "moonshotai/kimi-k2-thinking")
     
     selected_model = None
     if use_fast:
-        if provider == "openrouter" or (not provider and os.getenv("OPENROUTER_API_KEY")):
-            selected_model = OPENROUTER_FAST
-        elif provider == "nvidia" or (not provider and os.getenv("NVIDIA_API_KEY")):
-            selected_model = NVIDIA_FAST
+        selected_model = NVIDIA_FAST
 
-    if provider == "nvidia":
-        return get_nvidia_client(model=selected_model)
-    
-    # Default to openrouter, effectively bypassing HybridLLMClient logic
-    return get_openrouter_client(model=selected_model)
+    # Default to nvidia
+    return get_nvidia_client(model=selected_model)
 
-__all__ = ['NvidiaClient', 'OpenRouterClient', 'HybridLLMClient', 'get_llm_client', 'get_nvidia_client', 'get_openrouter_client', 'get_hybrid_client']
+__all__ = ['NvidiaClient', 'get_llm_client', 'get_nvidia_client']

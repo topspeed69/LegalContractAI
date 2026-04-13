@@ -95,7 +95,7 @@ async def startup_event():
         logger.info("✓ LLM client initialized successfully")
     except Exception as e:
         logger.error(f"✗ Failed to initialize LLM client: {str(e)}")
-        logger.warning("Make sure GEMINI_API_KEY is set in environment variables")
+        logger.warning("Make sure NVIDIA_API_KEY is set in environment variables")
     
     logger.info("=" * 60)
     logger.info("API Documentation available at: /docs")

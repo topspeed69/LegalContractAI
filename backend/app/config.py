@@ -8,8 +8,8 @@ PROJECT_NAME = "LegalContractAI"
 VERSION = "1.0.0"
 
 # AI Settings
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
+NVIDIA_MODEL = os.getenv("NVIDIA_MODEL", "mistralai/mistral-small-3.1-24b-instruct-2503")
 
 # Pinecone Settings
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
