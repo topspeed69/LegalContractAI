@@ -10,7 +10,7 @@ VERSION = "1.0.0"
 # AI Settings
 NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
 NVIDIA_MODEL_SMART = os.getenv("NVIDIA_MODEL_SMART", "meta/llama-3.3-70b-instruct")
-NVIDIA_MODEL_FAST = os.getenv("NVIDIA_MODEL_FAST", "mistralai/mistral-small-24b-instruct-2501")
+NVIDIA_MODEL_FAST = os.getenv("NVIDIA_MODEL_FAST", "mistralai/mistral-small-24b-instruct-2503")
 
 # Pipeline Settings
 TIMEOUT_PIPELINE = int(os.getenv("TIMEOUT_PIPELINE", "420"))

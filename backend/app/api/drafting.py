@@ -68,8 +68,14 @@ async def draft_contract(request: ContractDraftRequest):
                     provider=data.get("provider"),
                     status_queue=status_queue
                 )
-                # Send the final result
-                await status_queue.put({"event": "result", "data": final_state.final_contract})
+                # Send the final result with metadata (including self-review results)
+                await status_queue.put({
+                    "event": "result", 
+                    "data": {
+                        "contract": final_state.final_contract,
+                        "metadata": final_state.metadata
+                    }
+                })
                 await status_queue.put(None) # Termination signal
 
             # Start worker in background

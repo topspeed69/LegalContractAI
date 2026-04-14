@@ -455,6 +455,66 @@ const AIForm: React.FC<AIFormProps> = ({
               </Card>
             )}
 
+            {/* AI Agent Review Results */}
+            {response.metadata && response.metadata.review_quality && (
+              <Card className="border-l-4 border-l-primary bg-primary/5">
+                <CardContent className="py-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="px-2 py-1 bg-primary text-primary-foreground text-xs font-bold rounded uppercase">
+                        AI Agent Review
+                      </div>
+                      <span className="text-sm font-semibold">Quality: {response.metadata.review_quality.toUpperCase()}</span>
+                    </div>
+                    <div className="text-sm font-medium">
+                      Score: <span className="text-primary text-lg">{response.metadata.review_score}/10</span>
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {response.metadata.review_issues && response.metadata.review_issues.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-xs font-bold text-muted-foreground uppercase">Issues Found</p>
+                        <ul className="text-sm space-y-1">
+                          {response.metadata.review_issues.map((issue: string, i: number) => (
+                            <li key={i} className="flex gap-2 text-red-600 dark:text-red-400">
+                              <span>•</span> {issue}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {response.metadata.review_missing_clauses && response.metadata.review_missing_clauses.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-xs font-bold text-muted-foreground uppercase">Missing Clauses</p>
+                        <ul className="text-sm space-y-1">
+                          {response.metadata.review_missing_clauses.map((clause: string, i: number) => (
+                            <li key={i} className="flex gap-2 text-amber-600 dark:text-amber-400">
+                              <span>•</span> {clause}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  {response.metadata.review_suggestions && response.metadata.review_suggestions.length > 0 && (
+                    <div className="pt-2 border-t border-primary/10">
+                      <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Improvement Suggestions</p>
+                      <ul className="text-sm space-y-1 text-muted-foreground">
+                        {response.metadata.review_suggestions.map((sug: string, i: number) => (
+                          <li key={i} className="flex gap-2">
+                            <span>→</span> {sug}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             <GeneratedReport value={response.markdown} />
           </div>
         )}

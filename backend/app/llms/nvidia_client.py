@@ -142,7 +142,7 @@ class NvidiaClient:
                 model=self.model,
                 messages=messages,
                 temperature=0.3,
-                max_tokens=4096,
+                max_tokens=5120,
                 top_p=0.9,
                 stream=True
             )

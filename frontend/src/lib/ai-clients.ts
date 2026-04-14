@@ -37,7 +37,12 @@ const ROUTES: Record<TaskType, RouteConfig> = {
         { name: options?.partyB || 'Party B', role: 'Counterparty' }
       ]
     }),
-    transform: (payload: string) => ({ result: payload, metadata: null })
+    transform: (payload: any) => {
+      if (typeof payload === 'object' && payload !== null && 'contract' in payload) {
+        return { result: payload.contract, metadata: payload.metadata };
+      }
+      return { result: payload, metadata: null };
+    }
   },
   'compliance-check': {
     path: '/api/compliance/check',

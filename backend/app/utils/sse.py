@@ -5,10 +5,8 @@ def format_sse(data: Any, event: str = "message") -> str:
     """
     Format data as a Server-Sent Event (SSE).
     """
-    if isinstance(data, (dict, list)):
-        data = json.dumps(data)
-    else:
-        data = str(data)
+    # Always use json.dumps for data to handle multi-line strings / escaping correctly
+    data = json.dumps(data)
     
     return f"event: {event}\ndata: {data}\n\n"
 
