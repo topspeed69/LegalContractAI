@@ -20,7 +20,7 @@ class JurisdictionResolverAgent:
         # Else, use LLM to detect
 
         provider = state.metadata.get("provider", "google")
-        llm = get_llm_client(provider=provider)
+        llm = get_llm_client(provider=provider, use_fast=True)
         prompt = f"""
         Analyze the following contract text and identify the governing law and jurisdiction (Country and State/Region).
         

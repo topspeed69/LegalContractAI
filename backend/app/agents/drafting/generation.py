@@ -32,9 +32,9 @@ class GenerationAgent:
             from app.config import INDEX_STATUTES # Using statutes index for now, ideally should be a contracts index
             
             # Simple query to find relevant legal text
-            vector_store = pinecone_service.get_vector_store(INDEX_STATUTES)
+            # Simple query to find relevant legal text
             query = f"{contract_type} {detected_intent} {jurisdiction}"
-            docs = vector_store.similarity_search(query, k=3)
+            docs = pinecone_service.search(INDEX_STATUTES, query, k=3)
             
             if docs:
                 examples = "\n\n".join([f"--- Example Clause ---\n{d.page_content}" for d in docs])

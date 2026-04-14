@@ -16,25 +16,40 @@ class DraftingOrchestrator:
         self.generator = GenerationAgent()
         self.reviewer = SelfReviewAgent()
 
-    async def run(self, raw_requirements: str, metadata: dict = None, provider: str = None) -> ContractState:
+    async def run(self, raw_requirements: str, metadata: dict = None, provider: str = None, status_queue = None) -> ContractState:
         # 1. Initialize State
         state = ContractState(raw_text=raw_requirements, metadata=metadata or {})
         state.add_audit_log("DraftingOrchestrator", "Start", "Drafting process initiated")
 
+        if status_queue:
+            await status_queue.put({"event": "status", "data": {"stage": "Intent Analysis", "agent": "IntentAnalyzer"}})
+
         try:
-            # 2. Understand Intent
+            # 2. Understand Intent (Fast)
             await self.intent_analyzer.process(state)
             
-            # 3. Check Policies
+            if status_queue:
+                await status_queue.put({"event": "status", "data": {"stage": "Policy Check", "agent": "PolicyChecker"}})
+            
+            # 3. Check Policies (Fast)
             await self.policy_checker.process(state)
             
-            # 4. Select Template
+            if status_queue:
+                await status_queue.put({"event": "status", "data": {"stage": "Template Selection", "agent": "TemplateSelector"}})
+            
+            # 4. Select Template (Fast)
             await self.template_selector.process(state)
             
-            # 5. Generate Content
+            if status_queue:
+                await status_queue.put({"event": "status", "data": {"stage": "Generation", "agent": "GenerationAgent (Smart)"}})
+            
+            # 5. Generate Content (Smart model used inside GenerationAgent)
             await self.generator.process(state)
             
-            # 6. Self-Review / Refine
+            if status_queue:
+                await status_queue.put({"event": "status", "data": {"stage": "Self-Review", "agent": "ReviewAgent (Smart)"}})
+            
+            # 6. Self-Review / Refine (Smart model used inside SelfReviewAgent)
             await self.reviewer.process(state)
             
             # 7. Final Assembly
@@ -46,6 +61,8 @@ class DraftingOrchestrator:
         except Exception as e:
             logger.warning(f"Drafting pipeline failed or produced poor results: {e}. Running fallback...")
             state.add_audit_log("DraftingOrchestrator", "Fallback", f"Error: {str(e)}")
+            if status_queue:
+                await status_queue.put({"event": "status", "data": {"stage": "Fallback", "agent": "Orchestrator"}})
             await self._run_fallback(state, provider)
 
         state.add_audit_log("DraftingOrchestrator", "End", "Drafting process completed")

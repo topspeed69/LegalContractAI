@@ -20,29 +20,50 @@ class ComplianceOrchestrator:
         self.remediator = RemediationAgent()
         self.risk_scorer = RiskScoringAgent()
 
-    async def run(self, raw_text: str, metadata: dict = None) -> ContractState:
+    async def run(self, raw_text: str, metadata: dict = None, status_queue = None) -> ContractState:
         # 1. Initialize State
         state = ContractState(raw_text=raw_text, metadata=metadata or {})
         state.add_audit_log("Orchestrator", "Start", "Compliance check initiated")
 
-        # 2. Ingestion
+        if status_queue:
+            await status_queue.put({"event": "status", "data": {"stage": "Ingestion", "agent": "IngestionAgent"}})
+
+        # 2. Ingestion (Fast)
         await self.ingestion.process(state)
         
-        # 3. Jurisdiction
+        if status_queue:
+            await status_queue.put({"event": "status", "data": {"stage": "Jurisdiction", "agent": "JurisdictionResolver"}})
+
+        # 3. Jurisdiction (Fast)
         await self.jurisdiction.process(state)
         
-        # 4. Clause Extraction
+        if status_queue:
+            await status_queue.put({"event": "status", "data": {"stage": "Extraction", "agent": "ClauseExtractor"}})
+
+        # 4. Clause Extraction (Fast)
         await self.extractor.process(state)
         
-        # 5. Statute Retrieval (RAG)
+        if status_queue:
+            await status_queue.put({"event": "status", "data": {"stage": "Retrieval", "agent": "StatuteRetrieval (RAG)"}})
+
+        # 5. Statute Retrieval (RAG) (Fast)
         await self.retriever.process(state)
         
-        # 6. Compliance Reasoning (Thinking)
-        await self.reasoner.process(state)
+        if status_queue:
+            await status_queue.put({"event": "status", "data": {"stage": "Reasoning", "agent": "ComplianceReasoning (Smart)"}})
+
+        # 6. Compliance Reasoning (Thinking) (Smart)
+        await self.reasoner.process(state, status_queue=status_queue)
         
-        # 7. Remediation
+        if status_queue:
+            await status_queue.put({"event": "status", "data": {"stage": "Remediation", "agent": "RemediationAgent"}})
+
+        # 7. Remediation (Smart/Fast)
         await self.remediator.process(state)
         
+        if status_queue:
+            await status_queue.put({"event": "status", "data": {"stage": "Risk Scoring", "agent": "RiskScorer"}})
+
         # 8. Risk Scoring
         await self.risk_scorer.process(state)
 

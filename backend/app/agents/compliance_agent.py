@@ -160,22 +160,19 @@ class ComplianceAgent:
             return None
 
         try:
-            # Connect to vector store
-            vector_store = pinecone_service.get_vector_store(INDEX_STATUTES)
-            
-            # Similarity search
-            # We want top 3 results
-            docs = vector_store.similarity_search_with_score(
+            # Similarity search via integrated inference
+            docs = pinecone_service.search(
+                index_name=INDEX_STATUTES,
                 query=f"{clause} jurisdiction:{jurisdiction}",
                 k=3
             )
             
             context_chunks = []
-            for doc, score in docs:
+            for doc in docs:
                 context_chunks.append({
                     "text": doc.page_content,
                     "source": doc.metadata.get("source", "Unknown Statute"),
-                    "score": score
+                    "score": doc.metadata.get("score", 1.0)
                 })
                 
             return {

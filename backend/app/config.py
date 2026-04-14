@@ -9,7 +9,16 @@ VERSION = "1.0.0"
 
 # AI Settings
 NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
-NVIDIA_MODEL = os.getenv("NVIDIA_MODEL", "mistralai/mistral-small-3.1-24b-instruct-2503")
+NVIDIA_MODEL_SMART = os.getenv("NVIDIA_MODEL_SMART", "meta/llama-3.3-70b-instruct")
+NVIDIA_MODEL_FAST = os.getenv("NVIDIA_MODEL_FAST", "mistralai/mistral-small-24b-instruct-2501")
+
+# Pipeline Settings
+TIMEOUT_PIPELINE = int(os.getenv("TIMEOUT_PIPELINE", "420"))
+TIMEOUT_STANDARD = int(os.getenv("TIMEOUT_STANDARD", "120"))
+
+# LLM Retry Settings
+LLM_MAX_RETRIES = int(os.getenv("LLM_MAX_RETRIES", "5"))
+LLM_TIMEOUT = float(os.getenv("LLM_TIMEOUT", "120.0"))
 
 # Pinecone Settings
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
@@ -37,6 +46,6 @@ PDF_TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
 INDEX_STATUTES = "indian-statutes-v2"
 INDEX_REGULATIONS = "indian-regulations-v2"
 INDEX_CLAUSES = "contract-clauses-v2"
-INDEX_CASES = "case-law-summaries-v2"
+# INDEX_CASES = "case-law-summaries-v2" # Removed as per user request
 INDEX_SYNTHETIC = "synthetic-jurisdictions" # Optional/Legacy
 INDEX_COMMENTARY = "legal-commentary" # Optional/Legacy

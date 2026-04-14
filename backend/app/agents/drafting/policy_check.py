@@ -11,7 +11,7 @@ class PolicyCheckAgent:
     async def process(self, state: ContractState):
         logger.info("PolicyCheckAgent: Checking policies via LLM")
 
-        llm = get_llm_client()
+        llm = get_llm_client(use_fast=True)
 
         prompt = f"""You are a legal policy compliance reviewer. Analyze the following contract drafting request for any policy violations or risks.
 

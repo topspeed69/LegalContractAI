@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query
 from app.schemas import ChatRequest, ChatResponse, ErrorResponse, Citation
-from app.config import NVIDIA_API_KEY, INDEX_STATUTES, INDEX_CASES, INDEX_REGULATIONS
+from app.config import NVIDIA_API_KEY, INDEX_STATUTES, INDEX_REGULATIONS
 from app.llms import get_llm_client
 from app.RAG.pinecone_store import pinecone_service
 from app.services.encryption import encryption_service
@@ -26,21 +26,19 @@ logger = logging.getLogger(__name__)
 @tool
 def get_legal_context(query: str):
     """
-    Search for Indian legal context, statutes, case laws, and regulations from the knowledge base.
-    Use this for any specific legal questions, section queries, or precedent lookups.
+    Search for Indian legal context, statutes, and regulations from the knowledge base.
+    Use this for any specific legal questions, section queries, or compliance lookups.
     """
     try:
         # Statutes
-        statute_store = pinecone_service.get_vector_store(INDEX_STATUTES)
-        statute_docs = statute_store.similarity_search(query, k=2)
+        statute_docs = pinecone_service.search(INDEX_STATUTES, query, k=2)
         
-        # Case Law
-        case_store = pinecone_service.get_vector_store(INDEX_CASES)
-        case_docs = case_store.similarity_search(query, k=2)
+        # Regulations
+        reg_docs = pinecone_service.search(INDEX_REGULATIONS, query, k=2)
         
         context = []
-        for doc in statute_docs + case_docs:
-            source = doc.metadata.get("source", "Unknown")
+        for doc in statute_docs + reg_docs:
+            source = doc.metadata.get("source", "Legal Database")
             title = doc.metadata.get("title", "Legal Doc")
             context.append({
                 "source": source,

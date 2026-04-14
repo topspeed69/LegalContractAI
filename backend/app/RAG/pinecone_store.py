@@ -1,15 +1,14 @@
 """
 Pinecone Vector Store Service - LegalContractAI RAG Layer
 
-Provides a lazy-initialized, singleton PineconeService that wraps langchain-pinecone
-to perform similarity search over legal document indexes.
-
-This implementation uses Pinecone's server-side inference (embeddings) by default.
+Provides a lazy-initialized, singleton PineconeService that performs
+semantic search using Pinecone's server-side integrated inference.
 """
 
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
+from langchain_core.documents import Document
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +20,6 @@ class PineconeService:
 
     def __init__(self):
         self._pc = None
-        self._stores: Dict[str, Any] = {}
 
     def _ensure_initialized(self) -> None:
         """Initialize Pinecone client on first call."""
@@ -36,33 +34,42 @@ class PineconeService:
         self._pc = Pinecone(api_key=api_key)
         logger.info("Pinecone client initialised.")
 
-    def get_vector_store(self, index_name: str):
+    def search(self, index_name: str, query: str, k: int = 5, namespace: str = "legal-docs", filter: Optional[Dict[str, Any]] = None) -> List[Document]:
         """
-        Return a (cached) LangChain PineconeVectorStore for the given index.
-        Uses Pinecone server-side inference by default.
+        Perform semantic search using Pinecone Integrated Inference.
+        Returns a list of LangChain-style Document objects for compatibility.
         """
-        if index_name in self._stores:
-            return self._stores[index_name]
-
-        self._ensure_initialized()
-
-        from langchain_pinecone import PineconeVectorStore
-
         try:
-            # According to user instruction, use Pinecone's inference as default.
-            # Passing embedding=None to PineconeVectorStore tells it to use 
-            # the index's integrated inference model.
-            store = PineconeVectorStore(
-                index=self._pc.Index(index_name),
-                embedding=None,  # type: ignore
-                text_key="text"
+            self._ensure_initialized()
+            index = self._pc.Index(index_name)
+            
+            # Use query with inputs for integrated inference in SDK 5.0.x
+            # This allows passing raw text instead of vectors.
+            results = index.query(
+                namespace=namespace,
+                top_k=k,
+                inputs={"text": query},
+                filter=filter,
+                include_metadata=True
             )
-            self._stores[index_name] = store
-            logger.info("Connected to Pinecone index with native inference: %s", index_name)
-            return store
+            
+            docs = []
+            for match in results.get("matches", []):
+                # Integrated inference results usually place content in metadata
+                metadata = match.get("metadata", {})
+                content = metadata.get("text", "") # Standard field name we use
+                
+                docs.append(Document(
+                    page_content=content,
+                    metadata=metadata
+                ))
+            
+            logger.info(f"Retrieved {len(docs)} documents from {index_name}")
+            return docs
+            
         except Exception as exc:
-            logger.error("Failed to connect to index %s: %s", index_name, exc)
-            raise RuntimeError(f"Pinecone connection error: {exc}")
+            logger.error(f"Pinecone search failed for index {index_name}: {exc}")
+            return []
 
 
 # Singleton instance

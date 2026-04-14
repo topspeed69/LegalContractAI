@@ -130,7 +130,12 @@ const ROUTES: Record<TaskType, RouteConfig> = {
 };
 
 export const aiClient = {
-  async process(taskType: TaskType, content: string, options?: Record<string, any>): Promise<AIResponse> {
+  async process(
+    taskType: TaskType, 
+    content: string, 
+    options?: Record<string, any>,
+    onStatus?: (stage: string, agent: string) => void
+  ): Promise<AIResponse> {
     try {
       const route = ROUTES[taskType] ?? defaultReportRoute(taskType);
 
@@ -138,7 +143,7 @@ export const aiClient = {
       let provider = options?.provider;
       if (!provider) {
         const { data: { session } } = await supabase.auth.getSession();
-        provider = session?.user?.user_metadata?.llm_provider || 'google';
+        provider = session?.user?.user_metadata?.llm_provider || 'nvidia';
       }
 
       const payload = {
@@ -157,10 +162,60 @@ export const aiClient = {
         throw new Error(detail || `Backend request failed with status ${response.status}`);
       }
 
-      const data = route.expects === 'text' ? await response.text() : await response.json();
-      const { result, metadata } = route.transform(data);
+      // Handle Streaming vs Static Response
+      const contentType = response.headers.get('content-type');
+      if (contentType?.includes('text/event-stream')) {
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let resultData = '';
+        
+        let buffer = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-      return { data: result, error: null, metadata: metadata ?? null };
+          buffer += decoder.decode(value, { stream: true });
+          const messages = buffer.split('\n\n');
+          buffer = messages.pop() || ''; // Keep the last incomplete message in the buffer
+
+          for (const message of messages) {
+            if (!message.trim()) continue;
+            
+            const lines = message.split('\n');
+            let eventType = 'message';
+            let dataRaw = '';
+            
+            for (const line of lines) {
+              if (line.startsWith('event: ')) {
+                eventType = line.replace('event: ', '').trim();
+              } else if (line.startsWith('data: ')) {
+                dataRaw = line.replace('data: ', '').trim();
+              }
+            }
+
+            if (dataRaw) {
+              try {
+                const data = JSON.parse(dataRaw);
+                if (eventType === 'status') {
+                  onStatus?.(data.stage, data.agent);
+                } else if (eventType === 'result') {
+                  resultData = data;
+                }
+              } catch (e) {
+                if (eventType === 'result') resultData = dataRaw;
+              }
+            }
+          }
+        }
+
+        const { result, metadata } = route.transform(resultData);
+        return { data: result, error: null, metadata: metadata ?? null };
+      } else {
+        // Fallback for non-streaming routes
+        const data = route.expects === 'text' ? await response.text() : await response.json();
+        const { result, metadata } = route.transform(data);
+        return { data: result, error: null, metadata: metadata ?? null };
+      }
     } catch (error) {
       console.error('AI Processing Error:', error);
       return { data: null, error: error instanceof Error ? error : new Error('Processing failed') };

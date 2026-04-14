@@ -11,7 +11,7 @@ class IntentAnalysisAgent:
     async def process(self, state: ContractState):
         logger.info("IntentAnalysisAgent: Analyzing requirements via LLM")
 
-        llm = get_llm_client()
+        llm = get_llm_client(use_fast=True)
 
         prompt = f"""Analyze the following contract request and extract structured information.
 

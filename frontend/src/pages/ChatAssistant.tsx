@@ -37,7 +37,18 @@ const ChatAssistant = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (messagesEndRef.current) {
+            const viewport = messagesEndRef.current.closest('[data-radix-scroll-area-viewport]');
+            if (viewport) {
+                viewport.scrollTo({
+                    top: viewport.scrollHeight,
+                    behavior: "smooth"
+                });
+            } else {
+                // Fallback for non-radix scroll areas
+                messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            }
+        }
     };
 
     useEffect(() => {

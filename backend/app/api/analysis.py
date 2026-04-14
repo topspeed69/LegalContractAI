@@ -43,9 +43,8 @@ async def analyze_clauses(request: ClauseAnalysisRequest):
         # 1. Retrieve RAG Context
         rag_context = ""
         try:
-            vector_store = pinecone_service.get_vector_store(INDEX_STATUTES)
-            # Query for laws relevant to this text
-            docs = vector_store.similarity_search(request.text[:500], k=3) 
+            # Search for laws relevant to this text using integrated inference
+            docs = pinecone_service.search(INDEX_STATUTES, request.text[:500], k=3)
             
             if docs:
                 rag_context = "\n".join([f"- {d.page_content}" for d in docs])

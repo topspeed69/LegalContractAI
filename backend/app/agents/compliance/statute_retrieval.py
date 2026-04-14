@@ -13,14 +13,16 @@ class StatuteRetrievalAgent:
         jurisdiction_filter = {"jurisdiction": country}
         
         try:
-             # Use Pinecone for similarity search
-             vector_store = pinecone_service.get_vector_store(INDEX_STATUTES)
-             
              # Construct query from contract type and key clauses if available
              query = f"Contract laws in {country} regarding {state.metadata.get('contract_type', 'general contracts')}"
              
-             # Search for relevant statutes
-             docs = vector_store.similarity_search(query, k=5, filter=jurisdiction_filter)
+             # Search for relevant statutes using integrated inference and filter
+             docs = pinecone_service.search(
+                 index_name=INDEX_STATUTES,
+                 query=query,
+                 k=5,
+                 filter=jurisdiction_filter
+             )
              
              if not docs:
                  logger.warning(f"No statutes found for {country}. Proceeding with general fallback.")

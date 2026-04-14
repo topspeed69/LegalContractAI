@@ -11,7 +11,7 @@ class ClauseExtractorAgent:
         logger.info("ClauseExtractorAgent: Extracting clauses")
         
         provider = state.metadata.get("provider", "google")
-        llm = get_llm_client(provider=provider)
+        llm = get_llm_client(provider=provider, use_fast=True)
         prompt = f"""
         Extract ALL legal clauses from the following contract text.
         For each clause, provide:

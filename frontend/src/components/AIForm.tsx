@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Loader2, Check } from "lucide-react";
 import { aiClient } from "@/lib/ai-clients";
 import PipelineViewer, { DEFAULT_STAGES, COMPLIANCE_STAGES, RESEARCH_STAGES, SUMMARY_STAGES } from "@/components/PipelineViewer";
+import TaskProgressOverlay, { StatusUpdate } from "@/components/TaskProgressOverlay";
 import { TaskType, AIFormProps } from '@/types/ai';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -50,6 +51,8 @@ const AIForm: React.FC<AIFormProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<GeneratedResult | null>(null);
   const [credits, setCredits] = useState<UserCredits | null>(null);
+  const [statusUpdates, setStatusUpdates] = useState<StatusUpdate[]>([]);
+  const [showOverlay, setShowOverlay] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -218,7 +221,22 @@ const AIForm: React.FC<AIFormProps> = ({
       }
 
       console.log("Calling aiClient.process...");
-      const { data, error, metadata } = await aiClient.process(taskType, textContent, additionalData);
+      
+      // Determine expected duration for the timer
+      const isLongTask = ["contract-drafting", "clause-classification", "legal-research"].includes(taskType);
+      const totalDuration = isLongTask ? 420 : 120; // 7 mins or 2 mins
+      
+      setShowOverlay(true);
+      setStatusUpdates([]);
+
+      const { data, error, metadata } = await aiClient.process(
+        taskType, 
+        textContent, 
+        additionalData,
+        (stage, agent) => {
+          setStatusUpdates(prev => [...prev, { stage, agent, timestamp: Date.now() }]);
+        }
+      );
       console.log("aiClient.process response:", { data: data ? "Success" : null, error, metadata });
       if (error) throw error;
 
@@ -259,6 +277,7 @@ const AIForm: React.FC<AIFormProps> = ({
       toast.error(msg || "An error occurred while processing your request");
     } finally {
       setIsLoading(false);
+      setShowOverlay(false);
     }
   };
 
@@ -383,20 +402,13 @@ const AIForm: React.FC<AIFormProps> = ({
           </CardContent>
         </Card>
 
-        {/* Agent Pipeline Progress Viewer — only for contract drafting */}
-        {/* Agent Pipeline Progress Viewer */}
-        {isLoading && taskType === "contract-drafting" && (
-          <PipelineViewer stages={DEFAULT_STAGES} isActive={isLoading} />
-        )}
-        {isLoading && taskType === "compliance-check" && (
-          <PipelineViewer stages={COMPLIANCE_STAGES} isActive={isLoading} />
-        )}
-        {isLoading && taskType === "legal-research" && (
-          <PipelineViewer stages={RESEARCH_STAGES} isActive={isLoading} />
-        )}
-        {isLoading && taskType === "case-summary" && (
-          <PipelineViewer stages={SUMMARY_STAGES} isActive={isLoading} />
-        )}
+        {/* Premium Agent Pipeline Overlay */}
+        <TaskProgressOverlay 
+          isVisible={showOverlay}
+          totalDuration={["contract-drafting", "clause-classification", "legal-research"].includes(taskType) ? 420 : 120}
+          statusUpdates={statusUpdates}
+          taskType={taskType}
+        />
 
         {response && (
           <div className="space-y-6">
