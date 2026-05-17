@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { Analytics } from "@vercel/analytics/react";
 import Layout from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
 import Index from "@/pages/Index";
@@ -217,6 +218,7 @@ const App = () => (
           </BrowserRouter>
         </TooltipProvider>
       </ThemeProvider>
+      <Analytics />
     </QueryClientProvider>
   </ErrorBoundary>
 );
